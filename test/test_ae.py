@@ -13,7 +13,7 @@ from dataset import Quark_Gluon_Dataset
 matplotlib.use('Agg')
 
 
-parser = argparse.ArgumentParser(description='Diffusion Testing')
+parser = argparse.ArgumentParser(description='autoencoder Testing')
 parser.add_argument('--num_samples',type=int,default=10,help='training data size')
 args = parser.parse_args()
 
