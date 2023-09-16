@@ -8,12 +8,14 @@ sys.path += ['/home/pratyush/Desktop/diffusion/models/diffusion','..']
 from dataset import Quark_Gluon_Dataset
 from backward_diffusion import UNet
 from ddpm import DenoiseDiffusion_DDPM
+from ddim import DenoiseDiffusionDDIM
 import argparse
 from tqdm.autonotebook import tqdm
 import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser(description='Diffusion Training')
 
+parser.add_argument('--method',type=str,default='ddim',help='ddpm/ddim paper')
 parser.add_argument('--num_epochs',type=int,default=20,help = 'number of epochs')
 parser.add_argument('--T',type=int,default=200,help='number of time steps T')
 parser.add_argument('--lr',type=float,default=3e-4,help='learning rate')
@@ -45,11 +47,13 @@ data = Quark_Gluon_Dataset(data_path,num_samples=args.num_samples,transform=tran
 dataloader = torch.utils.data.DataLoader(data,batch_size=args.batch_size,
                                          num_workers=2,shuffle=True)
 
-# batch,label = next(iter(dataloader))
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = UNet().to(device)
-diffusion = DenoiseDiffusion_DDPM(model,args.T,device)
+if args.method == 'ddpm':
+    diffusion = DenoiseDiffusion_DDPM(model,args.T,device)
+else:
+    diffusion == DenoiseDiffusionDDIM(model,args.T,device)
 
 optimizer = torch.optim.Adam(model.parameters(),lr=args.lr)
 
@@ -63,20 +67,17 @@ for epoch in range(args.num_epochs):
         loss.backward()
         total_loss+=loss.item()
         optimizer.step()
-        
-        # print(torch.max(reconstructed))
-        # print(torch.min(reconstructed))
+
 
         reconstructed = reverse_transforms(reconstructed[0])
         jets = reverse_transforms(jets[0])
-        # print(torch.max(reconstructed))
-        # print(torch.min(reconstructed))
+
         if (epoch+1) % 2 == 0 and step % 350 == 0:
             plt.subplot(2,2,1)
             plt.imshow(reconstructed)
             plt.axis('off')
             plt.title('reconstructed_img')
-            # print(reconstructed[0].shape)
+
             plt.subplot(2,2,2)
             plt.imshow(reconstructed[:,:,0])
             plt.axis('off')
